@@ -1,0 +1,21 @@
+{
+  "name": "p26-back",
+  "version": "1.0.0",
+  "description": "Backend GraphQL (P6) de la practica P2-6 - NexoPlay, con base de datos SQLite real",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@apollo/server": "^5.5.1",
+    "better-sqlite3": "^11.3.0",
+    "dotenv": "^16.4.5",
+    "graphql": "^16.9.0"
+  },
+  "allowScripts": {
+    "better-sqlite3": true,
+    "@apollo/protobufjs": true
+  }
+}

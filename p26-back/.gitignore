@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# Database
+nexoplay.db
+*.db
+*.sqlite
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
