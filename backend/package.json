@@ -1,0 +1,19 @@
+{
+  "name": "pf-nexoplay-back",
+  "version": "1.0.0",
+  "description": "Backend GraphQL (Proyecto Final) de NexoPlay - PostgreSQL + PostgREST + OAuth2 (Google)",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@apollo/server": "^5.5.1",
+    "dotenv": "^16.4.5",
+    "google-auth-library": "^9.14.1",
+    "graphql": "^16.9.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.13.0"
+  }
+}

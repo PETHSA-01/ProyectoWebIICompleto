@@ -1,0 +1,85 @@
+---
+import '../styles/tokens.css';
+import CarritoResumen from '../components/CarritoResumen.jsx';
+import LoginGoogle from '../components/LoginGoogle.jsx';
+
+const { title = 'NexoPlay' } = Astro.props;
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title} · NexoPlay</title>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="contenedor topbar__inner">
+        <a href="/" class="topbar__logo">Nexo<span>Play</span></a>
+        <nav class="topbar__nav">
+          <a href="/">Inicio</a>
+        </nav>
+        <div class="topbar__acciones">
+          <!-- Islas de React: cada una hidrata por separado, pero comparten
+               estado (carrito, sesion) a traves de nanostores + localStorage. -->
+          <LoginGoogle client:load />
+          <CarritoResumen client:load />
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="footer">
+      <div class="contenedor">
+        <p>NexoPlay — Proyecto Final Programación Web II</p>
+      </div>
+    </footer>
+
+    <style>
+      .topbar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .topbar__inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        padding-block: 14px;
+      }
+      .topbar__logo {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 20px;
+        text-decoration: none;
+        color: var(--texto);
+      }
+      .topbar__logo span {
+        color: var(--violeta);
+      }
+      .topbar__nav a {
+        text-decoration: none;
+        color: var(--texto-secundario);
+        font-weight: 500;
+      }
+      .topbar__acciones {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+      .footer {
+        margin-top: 48px;
+        padding-block: 24px;
+        color: var(--texto-secundario);
+        font-size: 13px;
+        border-top: 1px solid var(--border);
+      }
+    </style>
+  </body>
+</html>

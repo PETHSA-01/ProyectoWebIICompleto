@@ -1,0 +1,101 @@
+:root {
+  --violeta: #5b21b6;
+  --violeta-oscuro: #3c1a80;
+  --cian: #06b6d4;
+  --dark: #0f172a;
+  --surface: #ffffff;
+  --surface-muted: #f1f5f9;
+  --border: #e2e8f0;
+  --texto: #0f172a;
+  --texto-secundario: #64748b;
+  --exito: #22c55e;
+  --advertencia: #f59e0b;
+  --error: #ef4444;
+
+  --font-display: 'Poppins', sans-serif;
+  --font-body: 'Inter', sans-serif;
+
+  --radius: 10px;
+  --radius-lg: 16px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--texto);
+  background: var(--surface-muted);
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+a {
+  color: inherit;
+}
+
+.contenedor {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.boton {
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+
+.boton--primario {
+  background: var(--violeta);
+  color: white;
+}
+.boton--primario:hover {
+  background: var(--violeta-oscuro);
+}
+.boton--primario:disabled {
+  background: #c4b5fd;
+  cursor: not-allowed;
+}
+
+.boton--secundario {
+  background: var(--surface-muted);
+  color: var(--texto);
+  border: 1px solid var(--border);
+}
+.boton--secundario:hover {
+  border-color: var(--violeta);
+  color: var(--violeta);
+}
+
+.boton--texto {
+  background: transparent;
+  color: var(--violeta);
+  padding: 8px 4px;
+}
+
+.boton--peligro {
+  color: var(--error);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

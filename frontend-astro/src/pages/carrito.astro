@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CarritoCheckout from '../components/CarritoCheckout.jsx';
+---
+<BaseLayout title="Carrito">
+  <section class="contenedor" style="max-width: 720px; margin-top: 24px;">
+    <h1>Tu carrito</h1>
+    <!-- Toda esta pagina es una sola isla: el carrito vive en localStorage
+         (nanostores), asi que no hay nada que el servidor pueda resolver
+         de antemano. -->
+    <CarritoCheckout client:load />
+  </section>
+  <style>
+    h1 { font-family: var(--font-display); }
+  </style>
+</BaseLayout>

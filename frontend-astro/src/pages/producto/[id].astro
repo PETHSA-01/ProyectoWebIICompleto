@@ -1,0 +1,80 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { graphqlRequest, QUERIES } from '../../lib/graphql.js';
+import AgregarAlCarrito from '../../components/AgregarAlCarrito.jsx';
+
+const { id } = Astro.params;
+
+let producto = null;
+let errorCarga = null;
+try {
+  const data = await graphqlRequest(QUERIES.producto, { id });
+  producto = data.producto;
+} catch (err) {
+  errorCarga = err.message;
+}
+
+if (!producto && !errorCarga) {
+  return Astro.redirect('/404');
+}
+---
+<BaseLayout title={producto ? producto.nombre : 'Producto'}>
+  <section class="contenedor detalle">
+    {producto && (
+      <a href={`/categoria/${producto.categoria.id}`} class="volver">
+        ← {producto.categoria.nombre}
+      </a>
+    )}
+
+    {errorCarga && <p class="error">No se pudo cargar el producto: {errorCarga}</p>}
+
+    {producto && (
+      <div class="detalle__grid">
+        <img src={producto.imagen} alt={producto.nombre} class="detalle__imagen" />
+        <div class="detalle__info">
+          <h1>{producto.nombre}</h1>
+          <p class="detalle__precio">${Number(producto.precio).toFixed(2)} MXN</p>
+          <p class="detalle__stock">
+            {producto.stock > 0 ? `${producto.stock} disponibles` : 'Sin stock por el momento'}
+          </p>
+
+          <!-- Unica parte interactiva de esta pagina: el resto es HTML
+               renderizado en el servidor. producto se pasa como prop
+               serializable (id, nombre, precio, stock) para la isla. -->
+          <AgregarAlCarrito
+            client:load
+            producto={{
+              id: producto.id,
+              nombre: producto.nombre,
+              precio: producto.precio,
+              stock: producto.stock,
+            }}
+          />
+        </div>
+      </div>
+    )}
+  </section>
+
+  <style>
+    .volver { color: var(--texto-secundario); text-decoration: none; font-size: 14px; }
+    .detalle__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      margin-top: 20px;
+    }
+    .detalle__imagen {
+      width: 100%;
+      background: var(--surface-muted);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+    .detalle__info h1 { font-family: var(--font-display); margin-top: 0; }
+    .detalle__precio { font-size: 28px; font-weight: 700; color: var(--violeta); }
+    .detalle__stock { color: var(--texto-secundario); }
+    .error { color: var(--error); }
+    @media (max-width: 720px) {
+      .detalle__grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</BaseLayout>
