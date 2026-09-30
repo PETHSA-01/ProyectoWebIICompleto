@@ -1,0 +1,4 @@
+import{j as r}from"./index.C_yHiNZZ.js";import{r as i}from"./index.DK-fsZOb.js";import{a as g}from"./carrito.CeadQMF2.js";function x({producto:a}){const[e,s]=i.useState(1),[o,t]=i.useState(!1),n=()=>{g(a,e),t(!0),setTimeout(()=>t(!1),1500)};return r.jsxs("div",{className:"agregar-carrito",children:[r.jsx("input",{type:"number",min:"1",max:a.stock,value:e,onChange:d=>s(Math.max(1,Number(d.target.value))),className:"agregar-carrito__cantidad","aria-label":"Cantidad"}),r.jsx("button",{className:"boton boton--primario",onClick:n,disabled:a.stock===0,children:a.stock===0?"Sin stock":o?"¡Agregado!":"Agregar al carrito"}),r.jsx("style",{children:`
+        .agregar-carrito { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+        .agregar-carrito__cantidad { width: 64px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius); }
+      `})]})}export{x as default};
