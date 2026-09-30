@@ -1,8 +1,9 @@
 // Login y logout de OAuth2 con Google.
 //
-// POST   -> recibe el ID token que entrego Google Identity Services, lo
-//           valida y abre la sesion (cookie httpOnly).
-// DELETE -> cierra la sesion borrando la cookie.
+// POST        -> recibe el ID token que entrego Google Identity Services, lo
+//                valida y abre la sesion (cookie httpOnly).
+// GET         -> devuelve el nonce para el login (ver abajo).
+// GET?salir=1 -> cierra la sesion borrando la cookie y redirige a /.
 //
 // El ID token NO se valida aqui del todo: la verificacion criptografica
 // (firma de Google, audiencia, expiracion) la sigue haciendo el backend en
@@ -115,16 +116,24 @@ export async function POST({ request, cookies }) {
   return json({ usuario: sesion.usuario });
 }
 
-export async function DELETE({ cookies }) {
-  borrarCookieSesion(cookies);
-  return new Response(null, { status: 204 });
+export async function DELETE() {
+  return new Response(null, { status: 405 });
 }
 
 /**
- * La isla LoginGoogle necesita el nonce ANTES de que Google verifique al
- * usuario, asi que se lo pedimos aqui en un GET previo a montar el boton.
+ * GET = nonce para iniciar login; GET ?salir=1 = cerrar sesion.
+ *
+ * El logout se resuelve por GET (y no con un DELETE por fetch) a proposito:
+ * el boton "Salir" es un enlace normal, asi que la sesion se cierra aunque
+ * la isla no haya hidratado, React falle o el navegador bloquee el fetch.
+ * Basta con que el GET llegue: se borra la cookie y se vuelve al inicio.
  */
-export async function GET({ cookies }) {
+export async function GET({ request, cookies }) {
+  if (new URL(request.url).searchParams.get('salir') === '1') {
+    borrarCookieSesion(cookies);
+    return new Response(null, { status: 302, headers: { Location: '/' } });
+  }
+
   const nonce = generarNonce();
   escribirCookieNonce(cookies, nonce);
   return json({ nonce });

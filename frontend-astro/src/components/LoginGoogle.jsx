@@ -46,6 +46,13 @@ export default function LoginGoogle({ usuarioInicial = null }) {
   const botonRef = useRef(null);
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
+  const [avatarFallido, setAvatarFallido] = useState(false);
+
+  // Si cambia el usuario (o vuelve a entrar con otra foto), reintentamos
+  // cargar el avatar real; el fallback de iniciales solo cubre el fallo.
+  useEffect(() => {
+    setAvatarFallido(false);
+  }, [sesion?.avatarUrl]);
 
   // El servidor ya sabe quien esta conectado (lo dejo en el middleware), asi
   // que se lo pasamos por prop y el store arranca con ese dato. Asi el
@@ -123,50 +130,65 @@ export default function LoginGoogle({ usuarioInicial = null }) {
     };
   }, [sesion]);
 
-  const salir = async () => {
-    setCargando(true);
-    setError(null);
-    try {
-      // El Content-Type va aunque no haya cuerpo a proposito: Astro bloquea
-      // con 403 los POST/DELETE que parecen formularios (sin content-type o
-      // con uno "de formulario") cuando el Origin no calza. Mandando JSON el
-      // logout no queda sujeto a esa comprobacion, que ademas depende de que
-      // el Host y el Origin coincidan exactamente y se rompe detras de un
-      // proxy. El GET/POST de /auth/sesion ya mandan JSON por lo mismo.
-      await fetch('/auth/sesion', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: '{}',
-      });
-    } catch {
-      // Si el DELETE falla igual, limpiamos el estado local para no dejar la
-      // interfaz mostrando un usuario que ya salio.
-    } finally {
-      cerrarSesion();
-      setCargando(false);
-    }
-  };
-
   if (sesion) {
     const nombre = sesion.nombre || sesion.email || 'Cuenta';
+    const primerNombre = nombre.trim().split(/\s+/)[0] || 'Cuenta';
+    const iniciales = nombre
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((palabra) => palabra.charAt(0).toUpperCase())
+      .join('');
     return (
       <div className="sesion-activa">
-        {sesion.avatarUrl && (
-          <img src={sesion.avatarUrl} alt="" className="sesion-activa__avatar" />
+        {sesion.avatarUrl && !avatarFallido ? (
+          <img
+            src={sesion.avatarUrl.replace(/=s\d+c$/, '=s250-c')}
+            alt=""
+            className="sesion-activa__avatar"
+            width={28}
+            height={28}
+            referrerPolicy="no-referrer"
+            onError={() => setAvatarFallido(true)}
+          />
+        ) : (
+          /* Si la foto no carga (bloqueo, cache, extension) o no hay foto,
+             nunca dejamos el circulo roto: se muestran las iniciales. */
+          <span className="sesion-activa__avatar sesion-activa__iniciales" aria-hidden="true">
+            {iniciales}
+          </span>
         )}
-        {/* El nombre entero vive en el title para no perderlo al recortar. */}
-        <span title={nombre}>{nombre.length > 28 ? `${nombre.slice(0, 28)}…` : nombre}</span>
-        <button
-          className="boton boton--texto"
-          onClick={salir}
-          disabled={cargando}
-          aria-busy={cargando}
-        >
+        {/* Solo el primer nombre, mas legible; el nombre completo (tal como lo
+            manda Google, sin tocar) queda en el tooltip. */}
+        <span title={nombre}>
+          {primerNombre.length > 28 ? `${primerNombre.slice(0, 28)}…` : primerNombre}
+        </span>
+        {/* Salir es un enlace normal (GET ?salir=1) y NO un fetch DELETE: el
+            logout funciona aunque la isla no hidrate o el navegador bloquee
+            fetch. El servidor borra la cookie y redirige al inicio. */}
+        <a className="boton boton--texto" href="/auth/sesion?salir=1">
           Salir
-        </button>
+        </a>
         <style>{`
           .sesion-activa { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-          .sesion-activa__avatar { width: 28px; height: 28px; border-radius: 50%; }
+          .sesion-activa__avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            object-fit: cover;
+            aspect-ratio: 1 / 1;
+            flex-shrink: 0;
+            background: var(--surface-muted);
+          }
+          .sesion-activa__iniciales {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            background: var(--violeta);
+          }
         `}</style>
       </div>
     );

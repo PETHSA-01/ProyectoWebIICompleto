@@ -43,7 +43,19 @@ export async function buscarOCrearUsuarioGoogle({ googleId, email, nombre, avata
     'SELECT * FROM usuarios WHERE google_id = $1',
     [googleId]
   );
-  if (porGoogleId) return porGoogleId;
+  if (porGoogleId) {
+    // Re-login con la MISMA cuenta Google: refrescamos nombre y avatar desde
+    // el ID token, por si los cambio en su cuenta de Google (p. ej. la foto
+    // de perfil). Sin este UPDATE, un usuario existente conservaria para
+    // siempre la URL de avatar original.
+    return queryOne(
+      `UPDATE usuarios
+         SET nombre = $1, avatar_url = $2
+       WHERE google_id = $3
+       RETURNING *`,
+      [nombre, avatarUrl, googleId]
+    );
+  }
 
   const porEmail = await queryOne('SELECT * FROM usuarios WHERE email = $1', [email]);
   if (porEmail) {
