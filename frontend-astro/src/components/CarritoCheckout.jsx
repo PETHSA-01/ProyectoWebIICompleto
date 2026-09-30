@@ -29,7 +29,14 @@ export default function CarritoCheckout() {
       setResultado(data.crearPedido);
       vaciarCarrito();
     } catch (err) {
-      setError(err.message);
+      // El proxy /api/graphql devuelve 401 cuando el JWT de la cookie ya
+      // caduco. Antes ese caso caia en el mismo mensaje de "error de red"
+      // que un 500, y el boton de confirmar seguia ahi como si nada.
+      setError(
+        err.status === 401
+          ? 'Tu sesion expiro. Sal y vuelve a entrar con Google para confirmar el pedido.'
+          : err.message
+      );
     } finally {
       setProcesando(false);
     }

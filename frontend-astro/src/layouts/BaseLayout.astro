@@ -4,6 +4,12 @@ import CarritoResumen from '../components/CarritoResumen.jsx';
 import LoginGoogle from '../components/LoginGoogle.jsx';
 
 const { title = 'NexoPlay' } = Astro.props;
+
+// El middleware ya leyo la cookie httpOnly y dejo el resultado en
+// Astro.locals.sesion. Se pasa a la isla para que el encabezado se renderice
+// con la sesion correcta desde el primer HTML, sin esperar a que hidraten las
+// islas. Solo viajan datos publicos del usuario, nunca el token.
+const usuarioInicial = Astro.locals.sesion?.usuario ?? null;
 ---
 <!doctype html>
 <html lang="es">
@@ -20,9 +26,12 @@ const { title = 'NexoPlay' } = Astro.props;
           <a href="/">Inicio</a>
         </nav>
         <div class="topbar__acciones">
-          <!-- Islas de React: cada una hidrata por separado, pero comparten
-               estado (carrito, sesion) a traves de nanostores + localStorage. -->
-          <LoginGoogle client:load />
+          <!-- Islas de React: cada una hidrata por separado. La sesion ya no
+               se reparte por localStorage (quedo expuesta a XSS): viaja en
+               una cookie httpOnly que lee el middleware en el servidor, y de
+               ahi sale usuarioInicial. El carrito sigue en localStorage,
+               que no tiene datos sensibles. -->
+          <LoginGoogle client:load usuarioInicial={usuarioInicial} />
           <CarritoResumen client:load />
         </div>
       </div>
