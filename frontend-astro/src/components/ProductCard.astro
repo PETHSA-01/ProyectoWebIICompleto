@@ -1,0 +1,100 @@
+---
+import BotonAgregar from './BotonAgregar.jsx';
+import { formatoMoneda } from '../lib/formatos.js';
+
+const { producto } = Astro.props;
+---
+<article class="producto-card">
+  <a
+    href={`/producto/${producto.id}`}
+    class="producto-card__enlace"
+    aria-label={producto.nombre}
+  >
+    <img
+      src={producto.imagen}
+      alt={producto.nombre}
+      loading="lazy"
+      class="producto-card__imagen"
+    />
+    <div class="producto-card__cuerpo">
+      <span class="producto-card__nombre">{producto.nombre}</span>
+      <span class="producto-card__categoria">
+        {producto.categoria?.nombre || 'Catálogo'}
+      </span>
+      <strong class="producto-card__precio">{formatoMoneda(producto.precio)}</strong>
+      {producto.stock > 0 && (
+        <span class="producto-card__stock">{producto.stock} disponibles</span>
+      )}
+    </div>
+  </a>
+  <BotonAgregar
+    client:load
+    producto={{
+      id: producto.id,
+      nombre: producto.nombre,
+      precio: producto.precio,
+      stock: producto.stock,
+    }}
+  />
+</article>
+
+<style>
+  .producto-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.15s ease;
+  }
+  .producto-card:hover {
+    border-color: var(--primary);
+  }
+  .producto-card__enlace {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: var(--text);
+    flex: 1;
+  }
+  .producto-card__imagen {
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    background: var(--surface-2);
+    border-radius: var(--radius-md);
+    padding: 12px;
+  }
+  .producto-card__cuerpo {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+  .producto-card__nombre {
+    font-size: var(--texto-base);
+    font-weight: 600;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    min-height: calc(2em * 1.35);
+  }
+  .producto-card__categoria {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+  .producto-card__precio {
+    font-size: var(--texto-md);
+    font-weight: 700;
+    color: var(--primary);
+    margin-top: 8px;
+  }
+  .producto-card__stock {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+</style>

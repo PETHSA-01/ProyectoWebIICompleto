@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ResultadoPago from '../../components/ResultadoPago.jsx';
+---
+<BaseLayout title="Resultado del pago">
+  <section class="contenedor" style="max-width: 560px; margin-top: 40px;">
+    <ResultadoPago
+      client:load
+      pedido={Astro.url.searchParams.get('pedido')}
+      proveedor={Astro.url.searchParams.get('proveedor')}
+      estadoQuery={Astro.url.searchParams.get('estado')}
+    />
+  </section>
+</BaseLayout>

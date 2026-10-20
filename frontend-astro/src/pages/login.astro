@@ -1,0 +1,7 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AuthForm from '../components/AuthForm.jsx';
+---
+<BaseLayout title="Iniciar sesión">
+  <AuthForm client:load modo="login" />
+</BaseLayout>

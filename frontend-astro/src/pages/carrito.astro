@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CarritoCheckout from '../components/CarritoCheckout.jsx';
+---
+<BaseLayout title="Tu carrito">
+  <section class="contenedor pag">
+    <CarritoCheckout client:load />
+  </section>
+  <style>
+    .pag { padding-top: 40px; }
+  </style>
+</BaseLayout>

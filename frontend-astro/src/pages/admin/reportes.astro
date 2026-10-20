@@ -1,0 +1,9 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminReportes from '../../components/AdminReportes.jsx';
+const usuario = Astro.locals.sesion.usuario;
+if (usuario.rol !== 'ADMIN') return Astro.redirect('/admin');
+---
+<AdminLayout title="Reportes">
+  <AdminReportes client:load />
+</AdminLayout>

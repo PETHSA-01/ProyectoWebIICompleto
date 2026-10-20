@@ -22,18 +22,9 @@ ProyectoWebIICompleto/
 │       ├── db.js                 Conexión better-sqlite3 + auto-inicialización desde db.sql
 │       ├── schema.js             SDL de GraphQL: types, enums, inputs, Query, Mutation
 │       └── resolvers.js          Resolvers + prepared statements + transacción crearPedido
-└── p26-front/                    Frontend React + Vite
-    ├── index.html                Fuentes Poppins/Inter de Google Fonts, lang="es"
-    └── src/
-        ├── main.jsx              Entry point (createRoot + StrictMode)
-        ├── App.jsx               Máquina de estados con useReducer + useTransition
-        ├── index.css             Estilos BEM-like completos
-        ├── styles/tokens.css     Design tokens CSS (variables de color, tipografía, radios)
-        ├── graphql/client.js     Cliente GraphQL genérico + queries centralizadas
-        ├── context/CarritoContext.jsx  Carrito compartido con Context API
-        ├── components/           ProductoCard, Skeleton, ErrorMessage, ImagenProducto (fallback)
-        │   └── layout/           TopBar, Sidebar, Hero, ContextBar, Footer
-        └── templates/            Home, DetalleCategoria, DetalleProducto, Carrito, Checkout
+└── p26-front/                    Frontend React + Vite — ELIMINADO en la rama AstroMongoYOAuth2.
+                                 La estructura completa de archivos se conserva en GitHub:
+                                 https://github.com/PETHSA-01/ProyectoWebIICompleto/tree/920d435/p26-front
 ```
 
 ## 3. Backend — elementos destacables

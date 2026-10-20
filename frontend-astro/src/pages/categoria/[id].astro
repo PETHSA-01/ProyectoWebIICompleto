@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { graphqlRequest, QUERIES } from '../../lib/graphql.js';
+
+const { id } = Astro.params;
+
+let categoria = null;
+let errorCarga = null;
+try {
+  const data = await graphqlRequest(QUERIES.categoria, { id });
+  categoria = data.categoria;
+} catch (err) {
+  errorCarga = err.message;
+}
+
+if (!categoria && !errorCarga) {
+  return Astro.redirect('/404');
+}
+---
+<BaseLayout title={categoria ? categoria.nombre : 'Categoría'}>
+  <section class="contenedor pagina">
+    <a href="/" class="enlace-volver">← Catálogo</a>
+
+    {errorCarga && <p class="cargar-error">No se pudo cargar la categoría: {errorCarga}</p>}
+
+    {categoria && (
+      <>
+        <h1>{categoria.nombre}</h1>
+        {categoria.productos.length === 0 ? (
+          <p class="vacio">Aún no hay productos en esta categoría.</p>
+        ) : (
+          <div class="grid-productos">
+            {categoria.productos.map((p) => <ProductCard producto={p} />)}
+          </div>
+        )}
+      </>
+    )}
+  </section>
+
+  <style>
+    .pagina { padding-top: 24px; }
+    .enlace-volver {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
+    .enlace-volver:hover { color: var(--primary); }
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin: 0 0 20px;
+    }
+    .grid-productos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .vacio {
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+    }
+    .cargar-error {
+      color: var(--danger);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+  </style>
+</BaseLayout>

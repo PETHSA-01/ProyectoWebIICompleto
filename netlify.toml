@@ -1,0 +1,25 @@
+# Le dice a Netlify en que subcarpeta vive el sitio que se va a construir,
+# ya que el repo tiene varias carpetas (backend/, p26-back/, frontend-astro/, etc.)
+
+[build]
+  base = "frontend-astro"
+  command = "npm run build"
+  publish = "dist"
+
+# Override SOLO para el contexto de desarrollo local (`astro dev` usa
+# contexto "dev"). @netlify/dev resuelve `base` relativo a la raiz del
+# proyecto Astro (frontend-astro), asi que el "frontend-astro" de [build]
+# daria lugar a frontend-astro/frontend-astro (inexistente). Con "." el dev
+# corre dentro de frontend-astro. El build de despliegue usa [build] y NO se
+# ve afectado por esta seccion.
+[context.dev]
+  base = "."
+
+# Variables PUBLIC_ que Astro incrusta en el bundle del navegador. Sin la
+# Public Key de Mercado Pago, el brick de Checkout API muestra "Mercado Pago
+# no esta configurado". Es una clave PUBLICA (no un secreto): ya viaja en el
+# JS del cliente. Las variables de servidor (SESSION_SECRET, GRAPHQL_URL) NO
+# van aqui: se definen en Netlify > Site settings > Environment variables.
+[build.environment]
+  PUBLIC_MP_PUBLIC_KEY = "APP_USR-6f1ff549-2435-4794-a57b-da6f9613f16b"
+
