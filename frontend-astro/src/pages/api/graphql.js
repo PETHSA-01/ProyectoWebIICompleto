@@ -91,6 +91,15 @@ export async function POST({ request, cookies }) {
   }
 
   if (!respuesta.ok) {
+    // Apollo contesta 400 con { errors: [...] } cuando la consulta no valida
+    // contra el esquema. Si el cuerpo es JSON de GraphQL se reenvia tal cual
+    // para poder diagnosticar; si no, se deja el mensaje generico.
+    if (json?.errors?.length) {
+      return new Response(texto, {
+        status: respuesta.status,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
     return new Response(
       JSON.stringify({ error: `El backend respondio ${respuesta.status}.` }),
       { status: respuesta.status, headers: { 'Content-Type': 'application/json' } }
