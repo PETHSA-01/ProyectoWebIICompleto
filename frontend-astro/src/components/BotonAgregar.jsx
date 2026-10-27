@@ -1,3 +1,4 @@
+import { useStockEnVivo } from '../lib/stockEnVivo.js';
 import { useState } from 'react';
 import { agregarAlCarrito } from '../stores/carrito.js';
 import CantidadSelector from './CantidadSelector.jsx';
@@ -13,7 +14,7 @@ import CantidadSelector from './CantidadSelector.jsx';
  * simple de toda la vida.
  */
 export default function BotonAgregar({ producto, conCantidad = false }) {
-  const stock = Number(producto.stock) || 0;
+  const { stock } = useStockEnVivo(producto.id, producto.stock);
   const [agregado, setAgregado] = useState(false);
   const [cantidad, setCantidad] = useState(1);
 

@@ -3,9 +3,10 @@ import { requerirAdmin, requerirPanel, requerirUsuario } from './auth/context.js
 import { firmarToken } from './auth/jwt.js';
 import { verificarIdTokenGoogle, buscarOCrearUsuarioGoogle } from './auth/google.js';
 import { crearHash, verificarPassword } from './auth/password.js';
-import { crearPago as crearPagoMercadoPago, crearPagoOxxo, consultarPagoPorReferencia } from './pagos/mercadopago.js';
+import { crearPago as crearPagoMercadoPago, crearPagoOxxo, consultarPagoPorReferencia, mensajeEstadoMercadoPago } from './pagos/mercadopago.js';
 import { crearOrden as crearOrdenPayPal, capturarOrden, consultarOrden } from './pagos/paypal.js';
 import { marcarPagoAprobado, marcarPagoFallido } from './pagos/estado-pedido.js';
+import { publicarStock, escucharStock } from './eventos.js';
 import { registrarMovimiento } from './inventario/movimientos.js';
 import { revertirAsientosVenta } from './contabilidad/asientos.js';
 import { resolversInventario } from './inventario/resolvers.js';
@@ -187,7 +188,7 @@ const resolversBase = {
       const existente = await queryOne('SELECT * FROM productos WHERE id = $1', [id]);
       if (!existente) return null;
       try {
-        return await queryOne(
+        const actualizado = await queryOne(
           `UPDATE productos
              SET nombre = $1, precio = $2, imagen = $3, stock = $4,
                  categoria_id = $5, costo_adquisicion = $6, sku = $7,
@@ -207,6 +208,9 @@ const resolversBase = {
             id,
           ]
         );
+        // Edicion directa desde el admin: avisamos a quien este suscrito.
+        publicarStock(id);
+        return actualizado;
       } catch (error) {
         throw errorSkuDuplicado(error);
       }
@@ -452,16 +456,26 @@ const resolversBase = {
 
       // Checkout API (Checkout Transparente): el navegador ya tokenizo la
       // tarjeta con la Public Key; aqui se ejecuta el cobro real.
-      const resultado = await crearPagoMercadoPago({
-        pedidoId,
-        monto: pedido.total,
-        token: datos.token,
-        paymentMethodId: datos.paymentMethodId,
-        installments: datos.installments,
-        issuerId: datos.issuerId,
-        payerEmail: datos.payerEmail,
-        descripcion: `Pedido #${pedidoId} - NexoPlay`,
-      });
+      let resultado;
+      try {
+        resultado = await crearPagoMercadoPago({
+          pedidoId,
+          monto: pedido.total,
+          token: datos.token,
+          paymentMethodId: datos.paymentMethodId,
+          installments: datos.installments,
+          issuerId: datos.issuerId,
+          payerEmail: datos.payerEmail,
+          descripcion: `Pedido #${pedidoId} - NexoPlay`,
+        });
+      } catch (err) {
+        // Si la API rechazo la operacion (4xx/402) y trae un status_detail
+        // conocido, mostramos el mensaje amigable en vez del error tecnico.
+        if (err.statusDetail) {
+          throw new Error(mensajeEstadoMercadoPago(err.statusDetail));
+        }
+        throw err;
+      }
 
       // Se guarda el metodo y el id del cobro para poder consultarlo despues
       // (verificarPago lo usa por external_reference, no por referencia_pago).
@@ -479,7 +493,11 @@ const resolversBase = {
           idPago: String(resultado.idPago),
         });
       } else if (resultado.estado === 'rejected' || resultado.estado === 'cancelled') {
+        // El cobro quedo registrado como fallido en la BD y ademas se le
+        // informa al cliente el motivo exacto (status_detail) para que pueda
+        // reintentar sin salir del formulario de tarjeta.
         await marcarPagoFallido(pedidoId);
+        throw new Error(mensajeEstadoMercadoPago(resultado.statusDetail));
       }
       // pending | in_process: se deja PENDIENTE y se confirma al volver a
       // /pago/resultado via verificarPago.
@@ -613,6 +631,16 @@ const resolversBase = {
   Categoria: {
     productos: (categoria) =>
       query('SELECT * FROM productos WHERE categoria_id = $1 ORDER BY id', [categoria.id]),
+  },
+
+  Subscription: {
+    // Se dispara cada vez que cambia el stock de un producto (edicion en el
+    // admin, compra, cancelacion, orden de compra o ajuste). Es publica: el
+    // stock ya lo ve cualquiera en el catalogo.
+    stockActualizado: {
+      subscribe: (_, { productoId }) => escucharStock(productoId ?? null),
+      resolve: (id) => queryOne('SELECT * FROM productos WHERE id = $1', [id]),
+    },
   },
 
   Producto: {

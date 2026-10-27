@@ -1,5 +1,6 @@
 ---
 import BotonAgregar from './BotonAgregar.jsx';
+import StockEnVivo from './StockEnVivo.jsx';
 import { formatoMoneda } from '../lib/formatos.js';
 
 const { producto } = Astro.props;
@@ -22,9 +23,7 @@ const { producto } = Astro.props;
         {producto.categoria?.nombre || 'Catálogo'}
       </span>
       <strong class="producto-card__precio">{formatoMoneda(producto.precio)}</strong>
-      {producto.stock > 0 && (
-        <span class="producto-card__stock">{producto.stock} disponibles</span>
-      )}
+      <StockEnVivo client:load productoId={producto.id} stockInicial={producto.stock} variante="card" />
     </div>
   </a>
   <BotonAgregar

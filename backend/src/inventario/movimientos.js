@@ -12,6 +12,8 @@
 // `cantidad` se guarda CON SIGNO (ENTRADA positiva, SALIDA negativa), de modo
 // que SUM(cantidad) por producto siempre reconstruye el stock actual.
 
+import { publicarStock } from '../eventos.js';
+
 /**
  * @param {object} client  cliente de la transaccion (withTransaction)
  * @param {object} mov     { productoId, tipo, cantidad, origen, referenciaId, usuarioId, motivo }
@@ -51,6 +53,9 @@ export async function registrarMovimiento(
     productoId,
     nuevoStock,
   ]);
+
+  // Aviso a las suscripciones GraphQL, pero solo si la transaccion hace COMMIT.
+  client.alCommit?.(() => publicarStock(productoId));
 
   return client.queryOne(
     `INSERT INTO movimientos_inventario

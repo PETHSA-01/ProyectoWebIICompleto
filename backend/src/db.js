@@ -55,7 +55,12 @@ export async function queryOne(text, params = []) {
  */
 export async function withTransaction(callback) {
   const client = await pool.connect();
+  // Acciones que deben correr SOLO si la transaccion termina en COMMIT (por
+  // ejemplo avisar por WebSocket que cambio el stock). Si hay ROLLBACK se
+  // descartan, para no anunciar cambios que nunca ocurrieron.
+  const pendientes = [];
   const scoped = {
+    alCommit: (fn) => pendientes.push(fn),
     query: (text, params) => client.query(text, params).then((r) => r.rows),
     queryOne: (text, params) =>
       client.query(text, params).then((r) => r.rows[0] ?? null),
@@ -64,6 +69,13 @@ export async function withTransaction(callback) {
     await client.query('BEGIN');
     const resultado = await callback(scoped);
     await client.query('COMMIT');
+    for (const fn of pendientes) {
+      try {
+        fn();
+      } catch (e) {
+        console.error('Accion post-commit fallo:', e.message);
+      }
+    }
     return resultado;
   } catch (err) {
     await client.query('ROLLBACK');

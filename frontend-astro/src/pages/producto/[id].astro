@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BotonAgregar from '../../components/BotonAgregar.jsx';
+import StockEnVivo from '../../components/StockEnVivo.jsx';
 import { graphqlRequest, QUERIES } from '../../lib/graphql.js';
 import { formatoMoneda } from '../../lib/formatos.js';
 
@@ -42,11 +43,7 @@ if (!producto && !errorCarga) {
 
           <strong class="detalle__precio">{formatoMoneda(producto.precio)}</strong>
 
-          <p class={`detalle__stock ${producto.stock > 0 ? '' : 'detalle__stock--agotado'}`}>
-            {producto.stock > 0
-              ? `${producto.stock} disponibles`
-              : 'Sin stock por el momento'}
-          </p>
+          <StockEnVivo client:load productoId={producto.id} stockInicial={producto.stock} />
 
           <div class="detalle__acciones">
             <BotonAgregar

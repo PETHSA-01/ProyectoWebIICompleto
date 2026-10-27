@@ -1,5 +1,10 @@
 import 'dotenv/config';
+import http from 'node:http';
 import express from 'express';
+import { WebSocketServer } from 'ws';
+import { useServer } from 'graphql-ws/use/ws';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import { ApolloServer } from '@apollo/server';
 import { expressMiddleware } from '@apollo/server/express4';
 import { typeDefs } from './src/schema.js';
@@ -17,7 +22,25 @@ app.use(express.json());
 // fallar rapido y con un mensaje claro si DATABASE_URL esta mal.
 await pool.query('SELECT 1');
 
-const server = new ApolloServer({ typeDefs, resolvers });
+// Servidor HTTP propio para compartir el puerto entre Express (consultas y
+// mutaciones) y el WebSocket de las suscripciones (graphql-ws, ruta /graphql).
+const httpServer = http.createServer(app);
+const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+const wsServer = new WebSocketServer({ server: httpServer, path: '/graphql' });
+const cerrarWs = useServer({ schema }, wsServer);
+
+const server = new ApolloServer({
+  schema,
+  plugins: [
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+    {
+      async serverWillStart() {
+        return { drainServer: async () => cerrarWs.dispose() };
+      },
+    },
+  ],
+});
 await server.start();
 
 app.use('/graphql', expressMiddleware(server, { context: crearContext }));
@@ -80,6 +103,6 @@ app.post('/api/pagos/paypal/webhook', async (req, res) => {
 });
 
 const port = process.env.PORT || 4001;
-app.listen(port, () => {
+httpServer.listen(port, () => {
   console.log(`Servidor GraphQL del Proyecto Final listo en http://localhost:${port}/graphql`);
 });

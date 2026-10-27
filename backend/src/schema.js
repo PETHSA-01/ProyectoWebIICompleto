@@ -677,6 +677,11 @@ export const typeDefs = `#graphql
     yo: Usuario
   }
 
+  type Subscription {
+    "Se emite cada vez que cambia el stock de un producto. Con productoId solo escucha ese producto."
+    stockActualizado(productoId: ID): Producto!
+  }
+
   """Operaciones de escritura (registran, actualizan o eliminan datos)."""
   type Mutation {
     "Registra un producto nuevo en el catalogo. Requiere rol ADMIN u OPERADOR."

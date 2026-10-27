@@ -18,6 +18,32 @@ import { createHash, createHmac } from 'node:crypto';
 
 const MERCADOPAGO_URL = 'https://api.mercadopago.com';
 
+// Traduccion de los status_detail de Mercado Pago a mensajes amigables para
+// el cliente. Se usa tanto cuando el cobro se crea pero queda "rejected"
+// (HTTP 201 con status_detail) como cuando la API responde un error 4xx/402
+// cuyo "cause[0].code" coincide con uno de estos codigos.
+const MENSAJES_STATUS_DETAIL = {
+  APRO: 'Tu pago fue aprobado.',
+  OTHE: 'El pago no se pudo procesar por un error general. Revisa tus datos o intenta con otra tarjeta.',
+  CONT: 'Tu pago quedó pendiente de confirmación.',
+  CALL: 'Tu banco pide que autorices la compra. Inténtalo de nuevo o contacta a tu banco.',
+  FUND: 'Tu tarjeta no tiene fondos suficientes. Prueba con otra tarjeta.',
+  SECU: 'El código de seguridad (CVV) es incorrecto. Revísalo e inténtalo de nuevo.',
+  EXPI: 'La fecha de vencimiento de tu tarjeta es incorrecta o ya venció.',
+  FORM: 'Hay un error en los datos del formulario de pago. Revísalos e inténtalo de nuevo.',
+};
+
+/**
+ * Devuelve el mensaje amigable para un status_detail de Mercado Pago. Si el
+ * codigo no esta en la tabla, devuelve un mensaje generico de rechazo.
+ */
+export function mensajeEstadoMercadoPago(statusDetail) {
+  return (
+    MENSAJES_STATUS_DETAIL[statusDetail] ||
+    'No se pudo completar el pago. Inténtalo de nuevo o usa otra tarjeta.'
+  );
+}
+
 function tokenAcceso() {
   const token = process.env.MP_ACCESS_TOKEN;
   if (!token) {
@@ -50,7 +76,11 @@ async function apiMercadoPago(ruta, { metodo = 'GET', cuerpo, encabezados = {} }
     const detalle =
       datos?.message || datos?.error || detalleOrders || (datos ? JSON.stringify(datos) : '') || 'error desconocido';
     console.error(`[mercadopago] ${metodo} ${ruta} -> ${respuesta.status}`, texto);
-    throw new Error(`Mercado Pago respondio ${respuesta.status}: ${detalle}`);
+    const error = new Error(`Mercado Pago respondio ${respuesta.status}: ${detalle}`);
+    // status_detail (o codigo de la primera "cause") para que el resolver
+    // muestre un mensaje amigable en vez del error tecnico.
+    error.statusDetail = datos?.status_detail || datos?.cause?.[0]?.code || null;
+    throw error;
   }
   return datos;
 }

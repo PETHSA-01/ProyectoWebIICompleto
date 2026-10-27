@@ -178,7 +178,7 @@ export default function AuthForm({ modo = 'login' }) {
 
           <GoogleBoton />
 
-          <div className="auth__divisor"> </div>
+          <div className="auth__divisor" aria-hidden="true" />
 
           <button type="submit" className="boton boton--primario" disabled={procesando}>
             {procesando ? 'Procesando…' : esLogin ? 'Iniciar sesión' : 'Crear cuenta'}
@@ -290,19 +290,9 @@ export default function AuthForm({ modo = 'login' }) {
           margin: 0;
         }
         .auth__divisor {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: var(--text-muted);
-          font-size: 13px;
-          margin: 4px 0;
-        }
-        .auth__divisor::before,
-        .auth__divisor::after {
-          content: '';
-          flex: 1;
           height: 1px;
           background: var(--border);
+          margin: 4px 0;
         }
         .auth__pie {
           font-size: 14px;
