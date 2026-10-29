@@ -1,0 +1,23 @@
+# Dependencias (se reinstalan con npm install)
+node_modules/
+
+# Builds
+dist/
+.astro/
+.netlify/
+
+# Variables de entorno (contienen secretos: JWT_SECRET, SESSION_SECRET,
+# contraseñas de base de datos). NUNCA deben subirse al repositorio.
+# Solo .env.example (sin valores reales) debe versionarse.
+.env
+.env.local
+.env.*.local
+backend/.env
+frontend-astro/.env
+
+# Base de datos local SQLite (práctica P2-6)
+*.db
+
+# Sistema / editor
+.DS_Store
+Thumbs.db

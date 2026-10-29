@@ -1,0 +1,186 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { graphqlRequest, QUERIES } from '../lib/graphql.js';
+import { IconoProducto } from '../components/Iconos.jsx';
+
+// Renderizada en el servidor en cada peticion: el catalogo llega ya dentro
+// del HTML, sin round-trips del navegador.
+let categorias = [];
+let productosDestacados = [];
+let errorCarga = null;
+
+try {
+  const [dataCategorias, dataProductos] = await Promise.all([
+    graphqlRequest(QUERIES.categorias),
+    graphqlRequest(QUERIES.productosDestacados, { limite: 8 }),
+  ]);
+  categorias = dataCategorias.categorias;
+  productosDestacados = dataProductos.productos;
+} catch (err) {
+  errorCarga = err.message;
+}
+---
+<BaseLayout title="Inicio">
+  <section class="hero">
+    <div class="contenedor hero__contenido">
+      <h1>Todo para tu setup gamer, en un solo lugar</h1>
+      <p>
+        Consolas, controles, audífonos y videojuegos con envío a todo México.
+      </p>
+      
+    </div>
+  </section>
+
+  {errorCarga && (
+    <div class="contenedor">
+      <p class="cargar-error">No se pudo cargar el catálogo: {errorCarga}</p>
+    </div>
+  )}
+
+  <section id="catalogo" class="contenedor">
+    <h2 class="seccion-titulo">Categorías</h2>
+    <div class="grid-categorias">
+      {categorias.length === 0 && !errorCarga && (
+        <p class="cargar-error">Aún no hay categorías registradas.</p>
+      )}
+      {categorias.map((cat) => (
+        <a href={`/categoria/${cat.id}`} class="tarjeta-categoria">
+          <span class="tarjeta-categoria__icono">
+            <IconoProducto size={24} />
+          </span>
+          <span class="tarjeta-categoria__nombre">{cat.nombre}</span>
+          <span class="tarjeta-categoria__cantidad">
+            {cat.productos.length} productos
+          </span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <section class="contenedor">
+    <h2 class="seccion-titulo">Destacados</h2>
+    <div class="grid-productos">
+      {productosDestacados.map((p) => <ProductCard producto={p} />)}
+    </div>
+  </section>
+
+  <style>
+    .hero {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-600) 100%);
+      padding: 72px 0;
+      margin-bottom: 8px;
+    }
+    .hero__contenido {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 16px;
+    }
+    .hero__eyebrow {
+      color: var(--accent);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .hero h1 {
+      font-size: 44px;
+      font-weight: 700;
+      line-height: 1.1;
+      color: #ffffff;
+      max-width: 720px;
+      margin: 0;
+    }
+    .hero p {
+      color: rgba(255, 255, 255, 0.92);
+      max-width: 540px;
+      margin: 0;
+    }
+    .hero .boton--blanco {
+      margin-top: 8px;
+      background: #ffffff;
+      color: var(--primary);
+      font-weight: 600;
+      border-radius: var(--radius-md);
+      height: 44px;
+      padding: 0 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      font-size: 15px;
+      text-decoration: none;
+    }
+    .hero .boton--blanco:hover {
+      background: rgba(255, 255, 255, 0.92);
+    }
+
+    .seccion-titulo {
+      margin: 48px 0 20px;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .grid-categorias {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+    .tarjeta-categoria {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.15s ease;
+    }
+    .tarjeta-categoria:hover {
+      border-color: var(--primary);
+    }
+    .tarjeta-categoria__icono {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      background: var(--surface-2);
+      color: var(--primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .tarjeta-categoria__nombre {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.35;
+    }
+    .tarjeta-categoria__cantidad {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .grid-productos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .cargar-error {
+      color: var(--danger);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+
+    @media (max-width: 640px) {
+      .hero { padding: 48px 0; }
+      .hero h1 { font-size: 32px; }
+    }
+  </style>
+</BaseLayout>

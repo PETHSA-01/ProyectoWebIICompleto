@@ -1,0 +1,125 @@
+---
+import '../styles/tokens.css';
+import CarritoResumen from '../components/CarritoResumen.jsx';
+import PerfilSesion from '../components/PerfilSesion.jsx';
+import ThemeToggle from '../components/ThemeToggle.jsx';
+
+const { title = 'NexoPlay' } = Astro.props;
+
+// El middleware ya leyo la cookie httpOnly y dejo el resultado en
+// Astro.locals.sesion. Se pasa a la isla para que el encabezado se renderice
+// con la sesion correcta desde el primer HTML, sin esperar a que hidraten las
+// islas. Solo viajan datos publicos del usuario, nunca el token.
+const usuarioInicial = Astro.locals.sesion?.usuario ?? null;
+---
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} · NexoPlay</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    />
+    <!-- Aplica el tema antes del primer pintado para evitar parpadeo. -->
+    <script is:inline>
+      (function () {
+        try {
+          var guardado = localStorage.getItem('nexoplay_tema');
+          var oscuro =
+            guardado === 'dark' ||
+            (guardado !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          document.documentElement.setAttribute('data-theme', oscuro ? 'dark' : 'light');
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="contenedor topbar__inner">
+        <a href="/" class="topbar__logo accion-icono" aria-label="Inicio">
+          <img
+            src="/Gemini_Generated_Image_ioo3eiioo3eiioo3.png"
+            alt=""
+            width="32"
+            height="32"
+            class="topbar__logo-img"
+          />
+          <span class="topbar__marca">
+            <span>Nexo</span><span class="topbar__marca-play">Play</span>
+          </span>
+          <span class="tooltip">Inicio</span>
+        </a>
+
+        <div class="topbar__acciones">
+          <ThemeToggle client:load />
+          <PerfilSesion client:load usuarioInicial={usuarioInicial} />
+          <CarritoResumen client:load />
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="footer">
+      <div class="contenedor">
+        <p>NexoPlay — Proyecto Final Programación Web II</p>
+      </div>
+    </footer>
+
+    <style>
+      .topbar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 0;
+        z-index: 30;
+      }
+      .topbar__inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        min-height: 64px;
+      }
+      .topbar__logo {
+        gap: 8px;
+        justify-content: flex-start;
+        width: auto;
+        height: 40px;
+      }
+      .topbar__logo-img {
+        border-radius: 8px;
+        object-fit: contain;
+      }
+      .topbar__marca {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 22px;
+        color: var(--primary);
+        line-height: 1;
+      }
+      .topbar__marca-play {
+        color: var(--accent);
+      }
+      .topbar__acciones {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .footer {
+        margin-top: 48px;
+        padding-block: 24px;
+        color: var(--text-muted);
+        font-size: 13px;
+        border-top: 1px solid var(--border);
+      }
+    </style>
+  </body>
+</html>

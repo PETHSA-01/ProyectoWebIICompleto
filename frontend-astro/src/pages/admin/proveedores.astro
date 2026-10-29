@@ -1,0 +1,8 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminProveedores from '../../components/AdminProveedores.jsx';
+const usuario = Astro.locals.sesion.usuario;
+---
+<AdminLayout title="Proveedores">
+  <AdminProveedores client:load rol={usuario.rol} />
+</AdminLayout>

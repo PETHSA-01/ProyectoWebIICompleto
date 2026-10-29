@@ -1,0 +1,137 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BotonAgregar from '../../components/BotonAgregar.jsx';
+import StockEnVivo from '../../components/StockEnVivo.jsx';
+import { graphqlRequest, QUERIES } from '../../lib/graphql.js';
+import { formatoMoneda } from '../../lib/formatos.js';
+
+const { id } = Astro.params;
+
+let producto = null;
+let errorCarga = null;
+try {
+  const data = await graphqlRequest(QUERIES.producto, { id });
+  producto = data.producto;
+} catch (err) {
+  errorCarga = err.message;
+}
+
+if (!producto && !errorCarga) {
+  return Astro.redirect('/404');
+}
+---
+<BaseLayout title={producto ? producto.nombre : 'Producto'}>
+  <section class="contenedor detalle">
+    {errorCarga && <p class="cargar-error">No se pudo cargar el producto: {errorCarga}</p>}
+
+    {producto && (
+      <div class="detalle__grid">
+        <img src={producto.imagen} alt={producto.nombre} class="detalle__imagen" />
+
+        <div class="detalle__info">
+          <nav class="detalle__migas" aria-label="Ruta del producto">
+            <a href="/">Inicio</a>
+            <span>/</span>
+            {producto.categoria ? (
+              <a href={`/categoria/${producto.categoria.id}`}>{producto.categoria.nombre}</a>
+            ) : (
+              <span>Catálogo</span>
+            )}
+          </nav>
+
+          <h1>{producto.nombre}</h1>
+
+          <strong class="detalle__precio">{formatoMoneda(producto.precio)}</strong>
+
+          <StockEnVivo client:load productoId={producto.id} stockInicial={producto.stock} />
+
+          <div class="detalle__acciones">
+            <BotonAgregar
+              client:load
+              conCantidad
+              producto={{
+                id: producto.id,
+                nombre: producto.nombre,
+                precio: producto.precio,
+                stock: producto.stock,
+              }}
+            />
+            <a href="/carrito" class="boton boton--secundario">Ir al carrito</a>
+          </div>
+
+          {producto.categoria && (
+            <a href={`/categoria/${producto.categoria.id}`} class="detalle__ver-mas">
+              Ver más en {producto.categoria.nombre}
+            </a>
+          )}
+        </div>
+      </div>
+    )}
+  </section>
+
+  <style>
+    .detalle { padding-top: 24px; }
+    .detalle__grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+    }
+    .detalle__imagen {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: contain;
+      background: var(--surface-2);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+    }
+    .detalle__migas {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .detalle__migas a { color: var(--text-muted); text-decoration: none; }
+    .detalle__migas a:hover { color: var(--primary); }
+    .detalle__info h1 {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.2;
+      margin: 16px 0 12px;
+    }
+    .detalle__precio { font-size: 32px; font-weight: 700; color: var(--primary); }
+    .detalle__stock { color: var(--text-muted); margin: 8px 0 24px; }
+    .detalle__stock--agotado { color: var(--danger); }
+    .detalle__acciones {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .detalle__acciones > * { flex: 1; max-width: 240px; min-width: 160px; }
+    .detalle__acciones > :first-child { max-width: 340px; }
+    .detalle__acciones .boton--secundario {
+      min-height: 44px;
+      justify-content: center;
+      text-decoration: none;
+    }
+    .detalle__ver-mas {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 14px;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .detalle__ver-mas:hover { text-decoration: underline; }
+    .cargar-error {
+      color: var(--danger);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+    }
+    @media (max-width: 720px) {
+      .detalle__grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</BaseLayout>

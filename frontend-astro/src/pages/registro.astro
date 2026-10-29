@@ -1,0 +1,7 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import AuthForm from '../components/AuthForm.jsx';
+---
+<BaseLayout title="Registrarse">
+  <AuthForm client:load modo="register" />
+</BaseLayout>

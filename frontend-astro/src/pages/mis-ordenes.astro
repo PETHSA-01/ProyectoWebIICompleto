@@ -1,0 +1,205 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { graphqlRequest } from '../lib/graphql.js';
+import { QUERIES } from '../lib/queries.js';
+import {
+  estadoCobroEs,
+  estadoEnvioEs,
+  formatoMoneda,
+  tonoCobro,
+  tonoEnvio,
+} from '../lib/formatos.js';
+
+// /mis-ordenes se renderiza en el servidor: con la cookie ya validada por el
+// middleware se consulta el backend y se pinta el HTML de entrada.
+const sesion = Astro.locals.sesion;
+
+let pedidos = [];
+let error = null;
+if (sesion) {
+  try {
+    const datos = await graphqlRequest(QUERIES.misPedidos, {}, sesion.token);
+    pedidos = datos.pedidos || [];
+  } catch (err) {
+    error = err.message;
+  }
+}
+---
+<BaseLayout title="Mis órdenes">
+  <section class="contenedor pagina">
+    {!sesion ? (
+      <div class="caja">
+        <h1>Mis órdenes</h1>
+        <p>
+          <a href="/login" class="enlace">Inicia sesión</a> para ver tus órdenes.
+        </p>
+      </div>
+    ) : (
+      <>
+        <h1>Mis órdenes</h1>
+
+        {error && <p class="caja caja--error">{error}</p>}
+
+        {!error && pedidos.length === 0 && (
+          <p class="caja caja--vacio">
+            Aún no tienes órdenes. <a href="/" class="enlace">Ve el catálogo</a>.
+          </p>
+        )}
+
+        <div class="ordenes">
+          {pedidos.map((p) => {
+            const pendienteDePago = p.estadoPago === 'PENDIENTE';
+            return (
+              <a
+                href={pendienteDePago ? `/carrito?pagar=${p.id}` : undefined}
+                class={`orden${pendienteDePago ? ' orden--clickeable' : ''}`}
+                aria-label={
+                  pendienteDePago ? `Pedido #${p.id}, pagar ahora` : `Pedido #${p.id}`
+                }
+              >
+                <div class="orden__cabecera">
+                  <strong>Pedido #{p.id}</strong>
+                  <span class="orden__fecha">
+                    {new Date(p.fecha).toLocaleString('es-MX')}
+                  </span>
+                </div>
+
+                <ul class="orden__items">
+                  {p.detalles.map((r, i) => (
+                    <li key={i}>
+                      {r.producto.nombre} × {r.cantidad}
+                    </li>
+                  ))}
+                </ul>
+
+                <div class="orden__pie">
+                  <span class="orden__total">{formatoMoneda(p.total)}</span>
+                  <span class="orden__badges">
+                    <span class={`badge badge--${tonoCobro(p.estadoPago)}`}>
+                      {estadoCobroEs(p.estadoPago)}
+                    </span>
+                    <span class={`badge badge--${tonoEnvio(p.status)}`}>
+                      {estadoEnvioEs(p.status)}
+                    </span>
+                  </span>
+                </div>
+
+                {p.envio && (
+                  <div class="orden__envio">
+                    <span>
+                      Guía {p.envio.paqueteria} · {p.envio.numeroGuia}
+                      {p.envio.simulado ? ' (simulada)' : ''}
+                    </span>
+                    {p.envio.urlRastreo && (
+                      <a href={p.envio.urlRastreo} target="_blank" rel="noreferrer">
+                        Rastrear
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {pendienteDePago && (
+                  <span class="orden__pagar">Pagar ahora →</span>
+                )}
+              </a>
+            );
+          })}
+        </div>
+      </>
+    )}
+  </section>
+
+  <style>
+    .pagina { padding-top: 40px; }
+    h1 { font-size: 28px; font-weight: 700; margin: 0 0 20px; }
+    .caja {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+    }
+    .caja--error { color: var(--danger); }
+    .caja--vacio { color: var(--text-muted); }
+    .enlace { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+    .ordenes {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .orden {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: block;
+      text-decoration: none;
+      color: var(--text);
+      transition: border-color 0.15s ease;
+    }
+    .orden--clickeable:hover {
+      border-color: var(--primary);
+    }
+    .orden__cabecera {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .orden__cabecera strong { font-size: 18px; font-weight: 700; }
+    .orden__fecha { color: var(--text-muted); font-size: 13px; }
+    .orden__envio {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .orden__envio a { color: var(--primary); font-weight: 600; text-decoration: none; }
+    .orden__items {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .orden__pie {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .orden__total { font-size: 16px; font-weight: 700; }
+    .orden__badges { display: flex; gap: 6px; }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .badge--ok { background: var(--st-ok-bg); color: var(--st-ok-fg); }
+    .badge--pending { background: var(--st-pending-bg); color: var(--st-pending-fg); }
+    .badge--bad { background: var(--st-bad-bg); color: var(--st-bad-fg); }
+    .badge--refund { background: var(--st-refund-bg); color: var(--st-refund-fg); }
+    .badge--neutral { background: var(--st-neutral-bg); color: var(--st-neutral-fg); }
+    .orden__pagar {
+      display: inline-block;
+      width: 100%;
+      text-align: center;
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: var(--radius-md);
+      background: var(--primary);
+      color: var(--on-primary);
+      font-size: 14px;
+      font-weight: 600;
+    }
+  </style>
+</BaseLayout>

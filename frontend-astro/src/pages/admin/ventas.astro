@@ -1,0 +1,9 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminVentas from '../../components/AdminVentas.jsx';
+const usuario = Astro.locals.sesion.usuario;
+if (usuario.rol !== 'ADMIN') return Astro.redirect('/admin');
+---
+<AdminLayout title="Ventas">
+  <AdminVentas client:load />
+</AdminLayout>
